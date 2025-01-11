@@ -1,77 +1,34 @@
-// const jwt = require('jsonwebtoken');
-
-// // set token secret and expiration date
-// const secret = 'mysecretsshhhhh';
-// const expiration = '2h';
-
-// module.exports = {
-//   // function for our authenticated routes
-//   authMiddleware: function (req, res, next) {
-//     // allows token to be sent via  req.query or headers
-//     let token = req.query.token || req.headers.authorization;
-
-//     // ["Bearer", "<tokenvalue>"]
-//     if (req.headers.authorization) {
-//       token = token.split(' ').pop().trim();
-//     }
-
-//     if (!token) {
-//       return res.status(400).json({ message: 'You have no token!' });
-//     }
-
-//     // verify token and get user data out of it
-//     try {
-//       const { data } = jwt.verify(token, secret, { maxAge: expiration });
-//       req.user = data;
-//     } catch {
-//       console.log('Invalid token');
-//       return res.status(400).json({ message: 'invalid token!' });
-//     }
-
-//     // send to next endpoint
-//     next();
-//   },
-//   signToken: function ({ username, email, _id }) {
-//     const payload = { username, email, _id };
-
-//     return jwt.sign({ data: payload }, secret, { expiresIn: expiration });
-//   },
-// };
-
 const jwt = require('jsonwebtoken');
+const { AuthenticationError } = require('apollo-server-express');
 
-// set token secret and expiration date
-const secret = 'mysecretsshhhhh';
+const secret = 'your-jwt-secret';
 const expiration = '2h';
 
-module.exports = {
-  // Middleware to parse token for GraphQL context
-  authMiddleware: function ({ req }) {
-    // allows token to be sent via headers
-    let token = req.headers.authorization;
+// Sign a token
+module.exports.signToken = function ({ username, email, _id }) {
+  const payload = { username, email, _id };
 
-    // ["Bearer", "<tokenvalue>"]
-    if (token) {
-      token = token.split(' ').pop().trim();
-    }
+  return jwt.sign(payload, secret, { expiresIn: expiration });
+};
 
-    if (!token) {
-      return { user: null };
-    }
+// Middleware to authenticate user
+module.exports.authMiddleware = function ({ req }) {
+  let token = req.headers.authorization || '';
 
-    try {
-      // verify token and return user data
-      const { data } = jwt.verify(token, secret, { maxAge: expiration });
-      return { user: data };
-    } catch {
-      console.log('Invalid token');
-      return { user: null };
-    }
-  },
+  if (token.startsWith('Bearer ')) {
+    token = token.slice(7, token.length).trim();
+  }
 
-  signToken: function ({ username, email, _id }) {
-    const payload = { username, email, _id };
+  if (!token) {
+    throw new AuthenticationError('You must be logged in!');
+  }
 
-    return jwt.sign({ data: payload }, secret, { expiresIn: expiration });
-  },
+  try {
+    const { data } = jwt.verify(token, secret, { maxAge: expiration });
+    req.user = data;
+  } catch {
+    throw new AuthenticationError('Your session has expired!');
+  }
+
+  return req;
 };

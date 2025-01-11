@@ -1,8 +1,7 @@
-// see SignupForm.js for comments
 import { useState } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
-
-import { loginUser } from '../utils/API';
+import { useMutation } from '@apollo/client'; // Import Apollo Client's useMutation hook
+import { LOGIN_USER } from '../utils/mutations'; // Import the LOGIN_USER mutation
 import Auth from '../utils/auth';
 
 const LoginForm = () => {
@@ -10,15 +9,20 @@ const LoginForm = () => {
   const [validated] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
 
+  // Use Apollo Client's mutation hook
+  const [loginUser, { error }] = useMutation(LOGIN_USER); // Use LOGIN_USER mutation
+
+  // Handle input changes
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setUserFormData({ ...userFormData, [name]: value });
   };
 
+  // Handle form submission (login)
   const handleFormSubmit = async (event) => {
     event.preventDefault();
 
-    // check if form has everything (as per react-bootstrap docs)
+    // Check if form has everything (as per react-bootstrap docs)
     const form = event.currentTarget;
     if (form.checkValidity() === false) {
       event.preventDefault();
@@ -26,22 +30,21 @@ const LoginForm = () => {
     }
 
     try {
-      const response = await loginUser(userFormData);
+      // Call the loginUser mutation from Apollo Client
+      const { data } = await loginUser({
+        variables: { ...userFormData },
+      });
 
-      if (!response.ok) {
-        throw new Error('something went wrong!');
-      }
-
-      const { token, user } = await response.json();
-      console.log(user);
-      Auth.login(token);
+      // If login is successful, store the token in local storage and redirect
+      const { token } = data.login; // Access token from login mutation response
+      Auth.login(token); // Assuming Auth.login stores the token and redirects the user
     } catch (err) {
       console.error(err);
       setShowAlert(true);
     }
 
+    // Clear form fields after submission
     setUserFormData({
-      username: '',
       email: '',
       password: '',
     });
@@ -49,14 +52,17 @@ const LoginForm = () => {
 
   return (
     <>
+      {/* Show alert if something goes wrong */}
+      <Alert dismissible onClose={() => setShowAlert(false)} show={showAlert || error} variant='danger'>
+        Something went wrong with your login credentials!
+      </Alert>
+
+      {/* Login Form */}
       <Form noValidate validated={validated} onSubmit={handleFormSubmit}>
-        <Alert dismissible onClose={() => setShowAlert(false)} show={showAlert} variant='danger'>
-          Something went wrong with your login credentials!
-        </Alert>
         <Form.Group className='mb-3'>
           <Form.Label htmlFor='email'>Email</Form.Label>
           <Form.Control
-            type='text'
+            type='email'
             placeholder='Your email'
             name='email'
             onChange={handleInputChange}
@@ -78,6 +84,7 @@ const LoginForm = () => {
           />
           <Form.Control.Feedback type='invalid'>Password is required!</Form.Control.Feedback>
         </Form.Group>
+
         <Button
           disabled={!(userFormData.email && userFormData.password)}
           type='submit'

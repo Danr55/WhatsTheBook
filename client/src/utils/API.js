@@ -1,57 +1,128 @@
-// route to get logged in user's info (needs the token)
-export const getMe = (token) => {
-  return fetch('/api/users/me', {
+const graphQLFetch = async (query, variables = {}) => {
+  const token = localStorage.getItem('id_token');  // or wherever you store the token
+
+  const response = await fetch('/graphql', {
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      authorization: `Bearer ${token}`,
+      authorization: token ? `Bearer ${token}` : '',
     },
+    body: JSON.stringify({ query, variables }),
   });
+
+  const { data, errors } = await response.json();
+
+  if (errors) {
+    throw new Error(errors.map((error) => error.message).join('\n'));
+  }
+
+  return data;
 };
 
+// Get logged in user's info
+export const getMe = () => {
+  const query = `
+    query {
+      me {
+        _id
+        username
+        email
+        savedBooks {
+          bookId
+          title
+          authors
+          description
+          image
+          link
+        }
+      }
+    }
+  `;
+  
+  return graphQLFetch(query);
+};
+
+// Create a new user (sign up)
 export const createUser = (userData) => {
-  return fetch('/api/users', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(userData),
-  });
+  const mutation = `
+    mutation createUser($username: String!, $email: String!, $password: String!) {
+      createUser(username: $username, email: $email, password: $password) {
+        token
+        user {
+          _id
+          username
+          email
+        }
+      }
+    }
+  `;
+  
+  return graphQLFetch(mutation, userData);
 };
 
+// Log in a user
 export const loginUser = (userData) => {
-  return fetch('/api/users/login', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(userData),
-  });
+  const mutation = `
+    mutation login($email: String!, $password: String!) {
+      login(email: $email, password: $password) {
+        token
+        user {
+          _id
+          username
+          email
+        }
+      }
+    }
+  `;
+  
+  return graphQLFetch(mutation, userData);
 };
 
-// save book data for a logged in user
-export const saveBook = (bookData, token) => {
-  return fetch('/api/users', {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(bookData),
-  });
+// Save a book to the user's savedBooks
+export const saveBook = (bookData) => {
+  const mutation = `
+    mutation saveBook($bookData: BookInput!) {
+      saveBook(bookData: $bookData) {
+        _id
+        username
+        savedBooks {
+          bookId
+          title
+          authors
+          description
+          image
+          link
+        }
+      }
+    }
+  `;
+  
+  return graphQLFetch(mutation, { bookData });
 };
 
-// remove saved book data for a logged in user
-export const deleteBook = (bookId, token) => {
-  return fetch(`/api/users/books/${bookId}`, {
-    method: 'DELETE',
-    headers: {
-      authorization: `Bearer ${token}`,
-    },
-  });
+// Remove a saved book from the user's savedBooks
+export const deleteBook = (bookId) => {
+  const mutation = `
+    mutation removeBook($bookId: String!) {
+      removeBook(bookId: $bookId) {
+        _id
+        username
+        savedBooks {
+          bookId
+          title
+          authors
+          description
+          image
+          link
+        }
+      }
+    }
+  `;
+  
+  return graphQLFetch(mutation, { bookId });
 };
 
-// make a search to google books api
-// https://www.googleapis.com/books/v1/volumes?q=harry+potter
+// Search for books from the Google Books API
 export const searchGoogleBooks = (query) => {
   return fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}`);
 };
