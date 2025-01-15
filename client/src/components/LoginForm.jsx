@@ -10,7 +10,7 @@ const LoginForm = () => {
   const [showAlert, setShowAlert] = useState(false);
 
   // Use Apollo Client's mutation hook
-  const [loginUser, { error }] = useMutation(LOGIN_USER); // Use LOGIN_USER mutation
+  const [login, { error }] = useMutation(LOGIN_USER); // Use LOGIN_USER mutation
 
   // Handle input changes
   const handleInputChange = (event) => {
@@ -31,7 +31,7 @@ const LoginForm = () => {
 
     try {
       // Call the loginUser mutation from Apollo Client
-      const { data } = await loginUser({
+      const { data } = await login({
         variables: { ...userFormData },
       });
 

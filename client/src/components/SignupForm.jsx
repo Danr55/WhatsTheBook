@@ -1,19 +1,21 @@
 import { useState } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
 import { useMutation } from '@apollo/client'; // Import Apollo Client's useMutation hook
-import { ADD_USER } from '../utils/mutations'; // Import the correct GraphQL mutation
+import { CREATE_USER } from '../utils/mutations'; // Import the correct GraphQL mutation
 import Auth from '../utils/auth';
+import { useNavigate } from 'react-router-dom'; // For redirecting after successful signup
 
 const SignupForm = () => {
   // set initial form state
   const [userFormData, setUserFormData] = useState({ username: '', email: '', password: '' });
   // set state for form validation
-  const [validated] = useState(false);
+  const [validated, setValidated] = useState(false);
   // set state for alert
   const [showAlert, setShowAlert] = useState(false);
 
   // Use Apollo Client's mutation hook
-  const [addUser, { error }] = useMutation(ADD_USER); // Use ADD_USER mutation
+  const [createUser, { error }] = useMutation(CREATE_USER); // Use CREATE_USER mutation
+  const navigate = useNavigate(); // For redirecting after successful signup
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -22,26 +24,36 @@ const SignupForm = () => {
 
   const handleFormSubmit = async (event) => {
     event.preventDefault();
-
-    // check if form has everything (as per react-bootstrap docs)
+  
+    // Perform form validation
     const form = event.currentTarget;
     if (form.checkValidity() === false) {
-      event.preventDefault();
       event.stopPropagation();
     }
+    setValidated(true); // Set validated to true to show feedback
 
     try {
-      const { data } = await addUser({
-        variables: { ...userFormData },
+      // Perform the mutation to add the user
+      const { data } = await createUser({
+        variables: { 
+          username: userFormData.username,
+          email: userFormData.email,
+          password: userFormData.password,
+        },
       });
-
-      const { token } = data.addUser; // Update to use addUser for the mutation response
+  
+      const { token } = data.createUser; // Get the token from the response
       Auth.login(token); // Log the user in with the token
+  
+      // Redirect to home or other page after successful signup
+      navigate('/'); // This will redirect the user to the homepage
+
     } catch (err) {
       console.error(err);
       setShowAlert(true);
     }
 
+    // Clear the form after submission
     setUserFormData({
       username: '',
       email: '',
@@ -51,9 +63,8 @@ const SignupForm = () => {
 
   return (
     <>
-      {/* This is needed for the validation functionality above */}
       <Form noValidate validated={validated} onSubmit={handleFormSubmit}>
-        {/* show alert if server response is bad */}
+        {/* Show alert if there's an error with the signup */}
         <Alert dismissible onClose={() => setShowAlert(false)} show={showAlert || error} variant='danger'>
           Something went wrong with your signup!
         </Alert>

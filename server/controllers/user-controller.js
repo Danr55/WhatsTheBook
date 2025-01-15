@@ -1,4 +1,4 @@
-const { AuthenticationError } = require('apollo-server-express');
+const { AuthenticationError } = require('@apollo/server');  // Use @apollo/server for AuthenticationError
 const { User } = require('../models');
 const { signToken } = require('../utils/auth');
 
@@ -52,17 +52,19 @@ const resolvers = {
 
     // Save a book to a user's `savedBooks` field
     saveBook: async (_, { book }, context) => {
+      console.log('Context User:', context.user);
+    
       if (!context.user) {
         throw new AuthenticationError('You need to be logged in!');
       }
-
+    
       try {
         const updatedUser = await User.findOneAndUpdate(
           { _id: context.user._id },
           { $addToSet: { savedBooks: book } },
           { new: true, runValidators: true }
         );
-
+    
         return updatedUser;
       } catch (err) {
         console.error(err);

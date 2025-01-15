@@ -5,17 +5,25 @@ const { signToken } = require('../utils/auth');
 const resolvers = {
   Query: {
     // Resolver for fetching the logged-in user's data
-    me: async (_, __, context) => {
+    me: async (parent,args, context) => {
+      console.log("user",context.user);
       if (context.user) {
-        return await User.findById(context.user._id).populate('savedBooks');
+        const foundUser = await User.findById(context.user._id).populate('savedBooks');
+        return foundUser;
       }
       throw new AuthenticationError('Not logged in');
     },
   },
 
   Mutation: {
+    createUser: async (parent, { username, email, password }) => {
+      const user = await User.create({ username, email, password });
+      const token = signToken(user);
+      return { token, user };
+    },
+    
     // Resolver for logging in a user
-    login: async (_, { email, password }) => {
+    login: async (parent, { email, password }) => {
       const user = await User.findOne({ email });
       if (!user) {
         throw new AuthenticationError('Invalid credentials');
@@ -31,11 +39,12 @@ const resolvers = {
     },
 
     // Resolver for saving a book to the user's savedBooks array
-    saveBook: async (_, { bookData }, context) => {
+    saveBook: async (parent, {input}, context) => {
+      console.log( 'context user:', context.user );
       if (context.user) {
         const updatedUser = await User.findByIdAndUpdate(
           context.user._id,
-          { $addToSet: { savedBooks: bookData } },
+          { $addToSet: { savedBooks: input} },
           { new: true, runValidators: true }
         );
         return updatedUser;
