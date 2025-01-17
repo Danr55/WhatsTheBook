@@ -49,7 +49,7 @@
 
 Oscar Rendon
 
-Code sourced with help ChatGPT
+Code sourced with help ChatGPT, Help from TA David Park.
 
 - github Link:https://github.com/Danr55/WhatsTheBook 
-
+- Deployed Link:
