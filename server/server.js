@@ -1,7 +1,7 @@
 const { ApolloServer } = require("@apollo/server"); // Use ApolloServer from @apollo/server
 const express = require("express");
 const mongoose = require("mongoose");
-const { typeDefs, resolvers } = require("./schema");
+const { typeDefs, resolvers } = require("./schema/index");
 const path = require("path");
 const { authMiddleware } = require("./utils/auth");
 const { expressMiddleware } = require("@apollo/server/express4"); // Correct middleware import
