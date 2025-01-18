@@ -2,6 +2,14 @@
 
  book tracking app that allows users to search for books, save them to their personal collection, and manage their book collection with authentication. The app utilizes GraphQL for API communication and Apollo Client for state management on the frontend.
 
+ ![WhatsTheBook](./Assets/Screenshot%202025-01-16%20at%207.39.50%20PM.png)
+
+![WhatTheBook](./Assets/Screenshot%202025-01-16%20at%207.40.05%20PM.png)
+
+![WhatTheBook](./Assets/Screenshot%202025-01-16%20at%207.40.14%20PM.png)
+
+![WhatsTheBook](./Assets/WhatsTheBook.gif)
+
 ## Features
 
 - **Sign Up**: Users can create an account and log in.
@@ -52,4 +60,5 @@ Oscar Rendon
 Code sourced with help ChatGPT, Help from TA David Park.
 
 - github Link:https://github.com/Danr55/WhatsTheBook 
-- Deployed Link:
+- Deployed Link:https://whatsthebook-nxpv.onrender.com/
+
